@@ -1,0 +1,50 @@
+# ===== .NET =====
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.suo
+*.userprefs
+.vs/
+*.rsuser
+TestResults/
+*.nupkg
+publish/
+launchSettings.json.bak
+
+# ===== SQL Server / LocalDB =====
+*.mdf
+*.ldf
+*.ndf
+
+# ===== Frontend (React + Vite + TypeScript) =====
+node_modules/
+dist/
+dist-ssr/
+*.local
+.vite/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===== Secrets and local config =====
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+secrets.json
+
+# ===== Logs =====
+*.log
+logs/
+
+# ===== Editors and OS =====
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+desktop.ini
+.DS_Store
