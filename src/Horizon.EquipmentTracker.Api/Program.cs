@@ -9,6 +9,12 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<EquipmentTrackerDbContext>(options =>
     options.UseSqlServer(connectionString));
 
+// Epic 2 service registrations (AD-11)
+builder.Services.AddScoped<Horizon.EquipmentTracker.Api.Services.PersonnelService>();
+builder.Services.AddScoped<Horizon.EquipmentTracker.Api.Services.EquipmentService>();
+builder.Services.AddScoped<Horizon.EquipmentTracker.Api.Services.CheckoutService>();
+builder.Services.AddScoped<Horizon.EquipmentTracker.Api.Services.ReturnService>();
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
