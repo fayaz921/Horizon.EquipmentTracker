@@ -41,10 +41,10 @@ public class ReturnService
     /// <exception cref="DbUpdateConcurrencyException">Propagated to controller for HTTP 409 mapping (AD-3).</exception>
     public async Task<ReturnResponseDto> ReturnLineAsync(int lineId, ReturnRequestDto request)
     {
-        if (!Enum.IsDefined(typeof(ReturnCondition), request.Condition))
-            throw new ArgumentException($"Invalid condition value '{request.Condition}'. Must be 1 (Good) or 2 (Damaged).");
+        if (!request.Condition.HasValue || !Enum.IsDefined(typeof(ReturnCondition), request.Condition.Value))
+            throw new ArgumentException("Condition is required and must be Good (1) or Damaged (2).");
 
-        var condition = (ReturnCondition)request.Condition;
+        var condition = request.Condition.Value;
 
         // Load the line with equipment navigations (locked for EF concurrency tracking)
         var line = await _db.CheckoutLines

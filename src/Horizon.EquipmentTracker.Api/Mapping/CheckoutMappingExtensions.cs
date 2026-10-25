@@ -20,7 +20,10 @@ public static class CheckoutMappingExtensions
         RecipientId = line.RecipientId,
         RecipientName = line.Recipient?.Name ?? string.Empty,
         ExpectedReturnDate = line.ExpectedReturnDate.ToString("yyyy-MM-dd"),
-        IsClosed = line.IsClosed
+        IsClosed = line.IsClosed,
+        Status = line.SerializedEquipment != null
+            ? line.SerializedEquipment.Status.ToString()
+            : (line.IsClosed ? "Closed" : "Out")
     };
 
     public static CheckoutResponseDto ToResponseDto(this CheckoutEvent evt) => new()

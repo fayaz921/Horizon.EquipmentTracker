@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Horizon.EquipmentTracker.Api.Models.Enums;
 
 namespace Horizon.EquipmentTracker.Api.Dtos;
 
@@ -10,12 +11,10 @@ namespace Horizon.EquipmentTracker.Api.Dtos;
 public class ReturnRequestDto
 {
     /// <summary>
-    /// Condition of the returned item (required by AD-7).
-    /// 1 = Good, 2 = Damaged.
+    /// Condition of the returned item (mandatory: Good or Damaged).
     /// </summary>
-    [Required]
-    [Range(1, 2, ErrorMessage = "Condition must be 1 (Good) or 2 (Damaged).")]
-    public int Condition { get; set; }
+    [Required(ErrorMessage = "Condition is required ('Good' or 'Damaged').")]
+    public ReturnCondition? Condition { get; set; }
 
     /// <summary>Optional notes about the item condition.</summary>
     public string? ConditionNotes { get; set; }

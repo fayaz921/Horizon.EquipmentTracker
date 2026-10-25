@@ -65,6 +65,7 @@ public class CheckoutLineResponseDto
     public string RecipientName { get; set; } = string.Empty;
     public string ExpectedReturnDate { get; set; } = string.Empty;
     public bool IsClosed { get; set; }
+    public string Status { get; set; } = string.Empty;
 }
 
 /// <summary>Response DTO for a checkout event (POST /api/checkouts response).</summary>

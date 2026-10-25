@@ -127,7 +127,8 @@ public class CheckoutService
     public async Task<IReadOnlyList<ActiveCustodyLineDto>> GetActiveCustodyAsync()
     {
         var lines = await _db.CheckoutLines
-            .Where(l => !l.IsClosed)
+            .Where(l => !l.IsClosed &&
+                        (l.SerializedEquipment == null || l.SerializedEquipment.Status == EquipmentStatus.Out))
             .Include(l => l.CheckoutEvent)
             .Include(l => l.Recipient)
             .Include(l => l.SerializedEquipment)
