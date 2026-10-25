@@ -13,6 +13,7 @@ public static class PersonnelMappingExtensions
         Id = p.Id,
         Name = p.Name,
         Role = p.Role,
-        PhoneNumber = p.PhoneNumber
+        PhoneNumber = p.PhoneNumber,
+        IsActive = p.IsActive
     };
 }

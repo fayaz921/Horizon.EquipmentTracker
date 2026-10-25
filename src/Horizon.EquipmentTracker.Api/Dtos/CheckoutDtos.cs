@@ -82,7 +82,7 @@ public class CheckoutResponseDto
 // Active Custody RESPONSE DTOs (Story 2.4)
 // ---------------------------------------------------------------------------
 
-/// <summary>Response DTO for an active (open) checkout line.</summary>
+/// <summary>Response DTO for an active (open) checkout line enriched with PKT delinquency status, extension count, and WhatsApp reminder link (Stories 4.1-4.3).</summary>
 public class ActiveCustodyLineDto
 {
     public int LineId { get; set; }
@@ -90,6 +90,7 @@ public class ActiveCustodyLineDto
     public int RecipientId { get; set; }
     public string RecipientName { get; set; } = string.Empty;
     public string RecipientPhone { get; set; } = string.Empty;
+    public string FormattedRecipientPhone { get; set; } = string.Empty;
     public int? SerializedEquipmentId { get; set; }
     public string? SerializedEquipmentName { get; set; }
     public string? SerialNumber { get; set; }
@@ -99,5 +100,38 @@ public class ActiveCustodyLineDto
     public string ExpectedReturnDate { get; set; } = string.Empty;
     public bool IsOverdue { get; set; }
     public bool IsDueToday { get; set; }
+    public string StatusBadge { get; set; } = string.Empty;
+    public int DaysDelinquent { get; set; }
+    public int ExtensionCount { get; set; }
+    public string? WhatsAppReminderUrl { get; set; }
     public string CheckoutTimestamp { get; set; } = string.Empty;
 }
+
+// ---------------------------------------------------------------------------
+// Due Date Extension DTOs (Story 4.2)
+// ---------------------------------------------------------------------------
+
+/// <summary>Request DTO for extending the expected return date of an active checkout line.</summary>
+public class ExtendDueDateRequestDto
+{
+    [Required]
+    public DateOnly NewExpectedReturnDate { get; set; }
+
+    [Required]
+    public int ExtendedById { get; set; }
+}
+
+/// <summary>Response DTO for a completed due date extension.</summary>
+public class DueDateExtensionResponseDto
+{
+    public int ExtensionLogId { get; set; }
+    public int CheckoutLineId { get; set; }
+    public string PreviousDate { get; set; } = string.Empty;
+    public string NewDate { get; set; } = string.Empty;
+    public int ExtendedById { get; set; }
+    public string ExtendedByName { get; set; } = string.Empty;
+    public string Timestamp { get; set; } = string.Empty;
+    public int ExtensionCount { get; set; }
+    public string Message { get; set; } = string.Empty;
+}
+

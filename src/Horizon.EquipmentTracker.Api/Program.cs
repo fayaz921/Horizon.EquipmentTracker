@@ -16,6 +16,7 @@ builder.Services.AddScoped<Horizon.EquipmentTracker.Api.Services.CheckoutService
 builder.Services.AddScoped<Horizon.EquipmentTracker.Api.Services.ReturnService>();
 builder.Services.AddScoped<Horizon.EquipmentTracker.Api.Services.ApprovalService>();
 builder.Services.AddScoped<Horizon.EquipmentTracker.Api.Services.AdminService>();
+builder.Services.AddScoped<Horizon.EquipmentTracker.Api.Services.HistoryService>();
 builder.Services.AddScoped<Horizon.EquipmentTracker.Api.Common.AdminAuthorizationFilter>();
 
 builder.Services.AddControllers()

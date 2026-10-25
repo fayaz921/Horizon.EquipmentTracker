@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
+using Horizon.EquipmentTracker.Api.Common;
 using Horizon.EquipmentTracker.Api.Data;
 using Horizon.EquipmentTracker.Api.Dtos;
 using Horizon.EquipmentTracker.Api.Mapping;
@@ -14,17 +15,22 @@ namespace Horizon.EquipmentTracker.Api.Services;
 
 /// <summary>
 /// Domain service encapsulating checkout business rules, availability enforcement,
-/// dual-attribution recording, and concurrency conflict handling (AD-3, AD-4, AD-11).
+/// dual-attribution recording, delinquency evaluation, due date extensions, and concurrency conflict handling (AD-3, AD-4, AD-8, AD-11).
 /// Uses EquipmentTrackerDbContext directly — no repository wrapper.
 /// </summary>
 public class CheckoutService
 {
     private readonly EquipmentTrackerDbContext _db;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<CheckoutService> _logger;
 
-    public CheckoutService(EquipmentTrackerDbContext db, ILogger<CheckoutService> logger)
+    public CheckoutService(
+        EquipmentTrackerDbContext db,
+        IConfiguration configuration,
+        ILogger<CheckoutService> logger)
     {
         _db = db;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -122,7 +128,7 @@ public class CheckoutService
     // -----------------------------------------------------------------------
 
     /// <summary>
-    /// Returns all open (non-closed) checkout lines with recipient and equipment details.
+    /// Returns all open (non-closed) checkout lines with recipient, equipment, and extension log details.
     /// </summary>
     public async Task<IReadOnlyList<ActiveCustodyLineDto>> GetActiveCustodyAsync()
     {
@@ -133,11 +139,85 @@ public class CheckoutService
             .Include(l => l.Recipient)
             .Include(l => l.SerializedEquipment)
             .Include(l => l.CountedInventory)
+            .Include(l => l.ExtensionLogs)
             .OrderBy(l => l.ExpectedReturnDate)
             .ToListAsync();
 
         return lines.Select(l => l.ToActiveCustodyDto()).ToList().AsReadOnly();
     }
+
+    // -----------------------------------------------------------------------
+    // Due Date Extension (Story 4.2 / AD-8)
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Extends the expected return date of an active checkout line.
+    /// Holders can self-extend until 23:59:59 PKT on the return date.
+    /// Once overdue (00:00 PKT on D+1), extending requires a valid X-Admin-PIN.
+    /// Appends an immutable record to DueDateExtensionLog and updates CheckoutLine.ExpectedReturnDate.
+    /// </summary>
+    /// <exception cref="KeyNotFoundException">CheckoutLine not found.</exception>
+    /// <exception cref="InvalidOperationException">Line is already closed.</exception>
+    /// <exception cref="ArgumentException">Invalid new date or unknown personnel.</exception>
+    /// <exception cref="UnauthorizedAccessException">Line is overdue and Admin PIN is missing or invalid.</exception>
+    public async Task<DueDateExtensionResponseDto> ExtendDueDateAsync(
+        int lineId,
+        ExtendDueDateRequestDto request,
+        string? adminPinHeader = null)
+    {
+        var line = await _db.CheckoutLines
+            .Include(l => l.ExtensionLogs)
+            .FirstOrDefaultAsync(l => l.Id == lineId)
+            ?? throw new KeyNotFoundException($"CheckoutLine with Id {lineId} not found.");
+
+        if (line.IsClosed)
+            throw new InvalidOperationException($"CheckoutLine {lineId} is already closed and cannot be extended.");
+
+        var extendedBy = await _db.Personnel
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == request.ExtendedById && p.IsActive)
+            ?? throw new ArgumentException($"Personnel with Id {request.ExtendedById} not found or is inactive.");
+
+        if (request.NewExpectedReturnDate <= line.ExpectedReturnDate)
+            throw new ArgumentException(
+                $"New expected return date ({request.NewExpectedReturnDate:yyyy-MM-dd}) must be later than current expected return date ({line.ExpectedReturnDate:yyyy-MM-dd}).");
+
+        // AD-8 Delinquency Gate: If line is overdue in PKT, Admin PIN is strictly required.
+        bool isOverdue = line.ExpectedReturnDate.IsOverdue();
+        if (isOverdue)
+        {
+            var expectedHash = _configuration["Security:AdminPinHash"];
+            if (string.IsNullOrWhiteSpace(adminPinHeader) || !PinHasher.VerifyPin(adminPinHeader, expectedHash))
+            {
+                _logger.LogWarning("Admin PIN verification failed for overdue extension on line {LineId}.", lineId);
+                throw new UnauthorizedAccessException("Extending an overdue checkout line requires a valid Admin PIN.");
+            }
+        }
+
+        var previousDate = line.ExpectedReturnDate;
+        line.ExpectedReturnDate = request.NewExpectedReturnDate;
+
+        var extensionLog = new DueDateExtensionLog
+        {
+            CheckoutLineId = line.Id,
+            PreviousDate = previousDate,
+            NewDate = request.NewExpectedReturnDate,
+            ExtendedById = request.ExtendedById,
+            Timestamp = DateTime.UtcNow
+        };
+
+        await _db.DueDateExtensionLogs.AddAsync(extensionLog);
+        await _db.SaveChangesAsync();
+
+        int totalExtensions = await _db.DueDateExtensionLogs.CountAsync(x => x.CheckoutLineId == line.Id);
+
+        _logger.LogInformation(
+            "Checkout line {LineId} extended from {PrevDate} to {NewDate} by {ExtendedByName} (Total extensions: {Total}). Overdue gate applied: {IsOverdue}.",
+            line.Id, previousDate, request.NewExpectedReturnDate, extendedBy.Name, totalExtensions, isOverdue);
+
+        return extensionLog.ToExtensionResponseDto(extendedBy.Name, totalExtensions);
+    }
+
 
     // -----------------------------------------------------------------------
     // Private helpers
