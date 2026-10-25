@@ -1,39 +1,345 @@
+@import '@fontsource-variable/inter';
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+
 :root {
-  --hor-primary: #0d6efd;
-  --hor-surface: #f8f9fa;
+  /* Brand & Core Palette */
+  --hor-navy: #0F172A;
+  --hor-navy-surface: #1E293B;
+  --hor-bg: #F1F5F9;
+  --hor-card: #FFFFFF;
+  --hor-border: #E2E8F0;
+  --hor-border-subtle: #F1F5F9;
+  --hor-text-main: #0F172A;
+  --hor-text-secondary: #475569;
+  --hor-text-muted: #64748B;
+
+  /* Primary Blue & Accents */
+  --hor-primary: #2563EB;
+  --hor-primary-hover: #1D4ED8;
+  --hor-primary-light: #EFF6FF;
+  --hor-amber: #F59E0B;
+  --hor-amber-hover: #D97706;
+  --hor-amber-light: #FFFBEB;
+
+  /* Semantic Status Palette */
+  --hor-green: #10B981;
+  --hor-green-light: #ECFDF5;
+  --hor-green-text: #065F46;
+
+  --hor-red: #EF4444;
+  --hor-red-light: #FEF2F2;
+  --hor-red-text: #991B1B;
+
+  --hor-indigo: #6366F1;
+  --hor-indigo-light: #EEF2FF;
+  --hor-indigo-text: #3730A3;
+
+  --hor-orange: #F97316;
+  --hor-orange-light: #FFF7ED;
+  --hor-orange-text: #9A3412;
+
+  --hor-slate: #64748B;
+  --hor-slate-light: #F8FAFC;
+  --hor-slate-text: #334155;
+
+  /* Override Bootstrap 5.3 variables */
+  --bs-font-sans-serif: 'Inter Variable', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --bs-body-font-family: var(--bs-font-sans-serif);
+  --bs-body-bg: var(--hor-bg);
+  --bs-body-color: var(--hor-text-main);
+  --bs-primary: #2563EB;
+  --bs-primary-rgb: 37, 99, 235;
+  --bs-secondary: #64748B;
+  --bs-secondary-rgb: 100, 116, 139;
+  --bs-success: #10B981;
+  --bs-success-rgb: 16, 185, 129;
+  --bs-warning: #F59E0B;
+  --bs-warning-rgb: 245, 158, 11;
+  --bs-danger: #EF4444;
+  --bs-danger-rgb: 239, 68, 68;
+  --bs-border-color: #E2E8F0;
+  --bs-border-radius: 12px;
+  --bs-border-radius-sm: 8px;
+  --bs-border-radius-lg: 16px;
+  --bs-box-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --bs-box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  --bs-box-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: var(--hor-surface);
+  font-family: var(--bs-body-font-family);
+  background-color: var(--hor-bg);
+  color: var(--hor-text-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
 }
 
-/* Large tap targets for mobile */
+/* Tabular numbers for dates and quantities */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* App Bar & Nav */
+.hor-navbar {
+  background-color: var(--hor-navy) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Base button touches */
 .btn {
-  min-height: 36px;
+  font-weight: 500;
+  border-radius: 8px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  transition: all 150ms ease-in-out;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--hor-primary);
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  background-color: var(--hor-primary);
+  border-color: var(--hor-primary);
+}
+
+.btn-primary:hover,
+.btn-primary:active {
+  background-color: var(--hor-primary-hover) !important;
+  border-color: var(--hor-primary-hover) !important;
+}
+
+.btn-amber {
+  background-color: var(--hor-amber);
+  border-color: var(--hor-amber);
+  color: #FFFFFF;
+}
+
+.btn-amber:hover,
+.btn-amber:active {
+  background-color: var(--hor-amber-hover);
+  border-color: var(--hor-amber-hover);
+  color: #FFFFFF;
 }
 
 .btn-lg {
   min-height: 48px;
+  font-size: 1rem;
 }
 
-/* Smooth modal backdrop */
-.modal.show.d-block {
-  animation: fadeIn 150ms ease-out;
+/* Form controls */
+.form-control,
+.form-select {
+  border-radius: 8px;
+  border-color: #CBD5E1;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  transition: border-color 150ms ease-in-out, box-shadow 150ms ease-in-out;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--hor-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
-/* Table row hover */
+/* Modern Card Styling */
+.card,
+.hor-card {
+  background-color: var(--hor-card);
+  border: 1px solid var(--hor-border);
+  border-radius: 14px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 150ms ease-in-out, transform 150ms ease-in-out, border-color 150ms ease-in-out;
+}
+
+.hor-card-clickable {
+  cursor: pointer;
+}
+
+.hor-card-clickable:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+}
+
+.hor-kpi-card:hover {
+  border-color: #CBD5E1 !important;
+  transform: translateY(-1px);
+}
+
+/* Overdue table row & card styling */
+.overdue-row {
+  border-left: 4px solid var(--hor-red) !important;
+  background-color: #FEF9F9;
+}
+
+.overdue-card {
+  border-left: 4px solid var(--hor-red) !important;
+}
+
+.due-today-row {
+  border-left: 4px solid var(--hor-amber) !important;
+  background-color: #FFFDF8;
+}
+
+.table-hover tbody tr {
+  transition: background-color 150ms ease-in-out;
+}
+
 .table-hover tbody tr:hover {
-  background-color: rgba(13, 110, 253, 0.06);
-  cursor: default;
+  background-color: #F8FAFC !important;
 }
 
-/* Card subtle shadow */
-.card {
-  transition: box-shadow 150ms ease;
+/* Filter chips */
+.hor-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.825rem;
+  font-weight: 500;
+  border: 1px solid var(--hor-border);
+  background-color: #FFFFFF;
+  color: var(--hor-text-secondary);
+  cursor: pointer;
+  user-select: none;
+  transition: all 150ms ease-in-out;
+}
+
+.hor-chip:hover {
+  background-color: #F8FAFC;
+  border-color: #CBD5E1;
+  color: var(--hor-text-main);
+}
+
+.hor-chip.active {
+  background-color: var(--hor-primary);
+  border-color: var(--hor-primary);
+  color: #FFFFFF;
+}
+
+/* Modals */
+.modal-backdrop.show {
+  opacity: 0.55;
+  backdrop-filter: blur(4px);
+}
+
+.modal.show.d-block {
+  animation: modalFadeIn 150ms ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.hor-modal-content {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.hor-modal-header {
+  border-bottom: 1px solid var(--hor-border);
+  padding: 1.25rem 1.5rem;
+  background-color: #FFFFFF;
+}
+
+.hor-modal-footer {
+  border-top: 1px solid var(--hor-border);
+  padding: 1rem 1.5rem;
+  background-color: #F8FAFC;
+}
+
+/* Mobile sticky action bar */
+.hor-mobile-action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1030;
+  background-color: #FFFFFF;
+  border-top: 1px solid var(--hor-border);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.06);
+  padding: 0.75rem 1rem;
+}
+
+/* Stepper buttons */
+.hor-stepper-btn {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--hor-border);
+  background: #FFFFFF;
+  border-radius: 6px;
+  color: var(--hor-text-main);
+  transition: all 150ms ease-in-out;
+}
+
+.hor-stepper-btn:hover:not(:disabled) {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+}
+
+.hor-stepper-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Progress bar segmentation for counted inventory */
+.hor-segmented-progress {
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: #E2E8F0;
+  display: flex;
+}
+
+.hor-seg-avail {
+  background-color: var(--hor-green);
+  transition: width 150ms ease-in-out;
+}
+
+.hor-seg-out {
+  background-color: var(--hor-amber);
+  transition: width 150ms ease-in-out;
+}
+
+.hor-seg-insp {
+  background-color: var(--hor-orange);
+  transition: width 150ms ease-in-out;
+}
+
+/* Skeleton animation */
+.placeholder {
+  border-radius: 4px;
+}
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
