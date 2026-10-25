@@ -8,14 +8,14 @@ This addendum preserves detailed technical specifications, state machines, opera
 
 As established in client requirements and developer technical decisions:
 
-- **Backend**: .NET 9, C#, ASP.NET Core Web API, Entity Framework Core (EF Core).
+- **Backend**: .NET 8, C#, ASP.NET Core Web API, Entity Framework Core (EF Core).
 - **Database**: SQL Server (SQL Server LocalDB for zero-overhead local development).
 - **Frontend**: React (Vite) + TypeScript, styled with Bootstrap 5.
 - **Project Structure**: A unified mono-repository:
   ```text
   e:\horizon-equipment-tracker\
   ├── src\
-  │   ├── Horizon.EquipmentTracker.Api\   # ASP.NET Core Web API (.NET 9)
+  │   ├── Horizon.EquipmentTracker.Api\   # ASP.NET Core Web API (.NET 8)
   │   └── client\                         # React + Vite + TypeScript (Bootstrap)
   ├── docs\                               # Project documentation & brief artifacts
   └── README.md                           # Local execution & verification guide

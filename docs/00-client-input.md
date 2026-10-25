@@ -37,7 +37,7 @@ Tariq"
 
 ## 3. Technical constraints (chosen by the developer)
 
-- Backend: .NET 9, C#, ASP.NET Core Web API, EF Core
+- Backend: .NET 8, C#, ASP.NET Core Web API, EF Core
 - Database: SQL Server (LocalDB for local running)
 - Frontend: React + Vite + TypeScript, styled with Bootstrap
 - One repository containing backend and frontend (src/Horizon.EquipmentTracker.Api and src/client)
