@@ -1,0 +1,61 @@
+# Epic 2: Checkout and Return
+
+[[entry]]
+id = 1
+type = "story"
+title = "Personnel Roster & Equipment Availability Query Endpoints"
+description = "Implement GET /api/personnel returning active personnel roster in alphabetical order, and GET /api/equipment returning serialized equipment availability status and counted inventory pool totals."
+verify = "Calling GET /api/personnel and GET /api/equipment returns seeded records with accurate availability counts."
+covers = ["FR-1", "FR-5", "FR-6"]
+after = []
+hitl = false
+risk = "low"
+notes = ["Scope: Must-Have"]
+
+[[entry]]
+id = 2
+type = "story"
+title = "Survey Kit Templates API"
+description = "Implement GET /api/kits endpoint returning sample demonstration kit templates (labelled as sample data, e.g. 'Sample: Standard Total Station Kit' and 'Sample: GPS RTK Rover Kit') to pre-populate multi-line checkout drafts."
+verify = "GET /api/kits returns JSON array of kits clearly labelled as sample data with deserialized item configurations."
+covers = ["FR-3"]
+after = [1]
+hitl = false
+risk = "low"
+notes = ["Scope: Should-Have"]
+
+[[entry]]
+id = 3
+type = "story"
+title = "Multi-Line Checkout Endpoint with Dual Attribution & Concurrency Protection"
+description = "Implement POST /api/checkouts accepting RecipientId, LoggedById, ExpectedReturnDate in PKT, and equipment lines; validates availability, updates status to Out, decrements bulk pools, and catches DbUpdateConcurrencyException returning HTTP 409."
+verify = "Submitting valid checkout persists CheckoutEvent and CheckoutLines, transitions assets to Out, and decrements bulk counts; concurrent conflicts return 409."
+covers = ["FR-1", "FR-2", "FR-4", "FR-7", "AD-3", "AD-4"]
+after = [1]
+hitl = false
+risk = "medium"
+notes = ["Scope: Must-Have"]
+
+[[entry]]
+id = 4
+type = "story"
+title = "Active Custody Query Endpoint"
+description = "Implement GET /api/checkouts/active returning open checkout lines with recipient details, expected return dates, item details, and held quantities."
+verify = "GET /api/checkouts/active returns all unclosed checkout lines with populated staff and equipment names."
+covers = ["FR-5", "FR-8"]
+after = [3]
+hitl = false
+risk = "low"
+notes = ["Scope: Must-Have"]
+
+[[entry]]
+id = 5
+type = "story"
+title = "Per-Line Return Endpoint"
+description = "Implement POST /api/returns/{lineId} closing individual checkout lines, recording ActualReturnTimestamp, restoring serialized assets to Available, and supporting partial quantity returns for counted inventory."
+verify = "Returning a line marks it closed, sets ActualReturnTimestamp, restores serialized item to Available, and increments available counted pool."
+covers = ["FR-8", "AD-3", "AD-7"]
+after = [4]
+hitl = false
+risk = "medium"
+notes = ["Scope: Must-Have"]

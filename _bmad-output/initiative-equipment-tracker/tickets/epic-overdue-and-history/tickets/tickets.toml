@@ -1,0 +1,49 @@
+# Epic 4: Overdue and History
+
+[[entry]]
+id = 1
+type = "story"
+title = "PKT Delinquency Evaluator & Due Date Status Service"
+description = "Implement DateTimeExtensions logic calculating Due Today and Overdue status strictly against Pakistan Standard Time (PKT, UTC+05:00); overdue begins at 00:00 PKT following ExpectedReturnDate; enriches active checkout responses with status badges and days delinquent."
+verify = "Items due yesterday evaluate to Overdue with correct day count; items due today evaluate to Due Today."
+covers = ["FR-14", "AD-2", "AD-8"]
+after = []
+hitl = false
+risk = "low"
+notes = ["Scope: Must-Have"]
+
+[[entry]]
+id = 2
+type = "story"
+title = "Due Date Extension Endpoint with Delinquency Gate & Audit Log"
+description = "Implement POST /api/checkouts/{lineId}/extend permitting self-extension before due date midnight in PKT, requiring Admin PIN header X-Admin-PIN once overdue, and writing immutable record to DueDateExtensionLog with cumulative extension count."
+verify = "Self-extension succeeds on non-overdue line; overdue line rejects without Admin PIN and succeeds with Admin PIN; DueDateExtensionLog records entry."
+covers = ["FR-16", "AD-6", "AD-8"]
+after = [1]
+hitl = false
+risk = "medium"
+notes = ["Scope: Should-Have"]
+
+[[entry]]
+id = 3
+type = "story"
+title = "WhatsApp Reminder Link DTO & Pakistani Phone Formatter"
+description = "Implement utility and API response helper formatting local Pakistani numbers (0300...) to international digits (92300...) and producing standardized pre-encoded wa.me reminder message URLs for Due Today and Overdue lines."
+verify = "Generated wa.me URL correctly formats recipient phone number and URL-encoded message text."
+covers = ["FR-15", "AD-9"]
+after = [1]
+hitl = false
+risk = "low"
+notes = ["Scope: Should-Have"]
+
+[[entry]]
+id = 4
+type = "story"
+title = "Historical Custody Query Endpoint with Interval Overlap"
+description = "Implement GET /api/history accepting presets ('this-month', 'last-month', custom 'from'/'to'), PersonId, and EquipmentId; calculates [T_checkout, T_return] interval overlap against query window, evaluating open checkouts as extending to current timestamp."
+verify = "GET /api/history returns matching custody records accurately overlapping the selected date range and filters."
+covers = ["FR-17", "FR-18", "AD-2"]
+after = []
+hitl = false
+risk = "medium"
+notes = ["Scope: Must-Have"]

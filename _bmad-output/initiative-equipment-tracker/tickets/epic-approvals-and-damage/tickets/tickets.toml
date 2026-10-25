@@ -1,0 +1,61 @@
+# Epic 3: Approvals and Damage
+
+[[entry]]
+id = 1
+type = "story"
+title = "Mandatory Condition Check & Instant Damage Quarantine"
+description = "Enhance POST /api/returns/{lineId} to enforce mandatory Condition ('Good' or 'Damaged') while keeping ConditionNotes strictly optional; returning Damaged immediately sets SerializedEquipment.Status to NeedsInspection or increments CountedInventory.QuantityInInspection."
+verify = "Returning an item as Damaged isolates it immediately into NeedsInspection and removes it from checkout availability; condition note remains strictly optional."
+covers = ["FR-9", "FR-10", "AD-7"]
+after = []
+hitl = false
+risk = "medium"
+notes = ["Scope: Must-Have"]
+
+[[entry]]
+id = 2
+type = "story"
+title = "Restricted Asset Checkout Transition to Pending Approval"
+description = "Update checkout logic so items with RequiresApproval == true (such as the Drone) transition into PendingApproval rather than Out, locking them from circulation without inline PIN bypass."
+verify = "Checking out the Drone transitions it to PendingApproval, locks it from other users, and leaves custody unassigned."
+covers = ["FR-11", "FR-12", "AD-5"]
+after = []
+hitl = false
+risk = "low"
+notes = ["Scope: Should-Have"]
+
+[[entry]]
+id = 3
+type = "story"
+title = "Approvals Queue & Approver PIN Release Endpoint"
+description = "Implement GET /api/approvals/pending to list pending requests, and POST /api/approvals/{lineId}/approve verifying the designated approver's PIN (Hamza's hash '1234'); transitions status to Out upon valid PIN, strictly rejecting incorrect PINs or admin overrides."
+verify = "POST with valid Hamza PIN releases drone to Out; wrong PIN or Admin PIN fails with 401."
+covers = ["FR-12", "FR-13", "AD-5"]
+after = [2]
+hitl = false
+risk = "medium"
+notes = ["Scope: Should-Have"]
+
+[[entry]]
+id = 4
+type = "story"
+title = "Pending Request Cancellation Endpoint"
+description = "Implement POST /api/approvals/{lineId}/cancel allowing the requester or Saima to cancel a pending checkout request, restoring the asset to Available."
+verify = "Cancelling a pending approval clears the checkout line and restores the asset status to Available."
+covers = ["FR-12"]
+after = [2]
+hitl = false
+risk = "low"
+notes = ["Scope: Should-Have"]
+
+[[entry]]
+id = 5
+type = "story"
+title = "Inspection Clearance Endpoint"
+description = "Implement POST /api/admin/equipment/{id}/clear-inspection requiring X-Admin-PIN header; transitions serialized items back to Available or restores counted inventory inspection pools with optional resolution notes."
+verify = "Clearing inspection with valid Admin PIN restores item to Available; invalid PIN returns 401 Unauthorized."
+covers = ["FR-20", "AD-6", "AD-7"]
+after = [1]
+hitl = false
+risk = "low"
+notes = ["Scope: Must-Have"]
