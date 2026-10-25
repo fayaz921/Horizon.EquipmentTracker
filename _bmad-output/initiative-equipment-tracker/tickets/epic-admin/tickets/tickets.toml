@@ -4,9 +4,9 @@
 id = 1
 type = "story"
 title = "Admin PIN Header Authorization Filter"
-description = "Implement AdminAuthorizationFilter / middleware validating X-Admin-PIN header against SHA-256 hash of configured Admin PIN ('9999' in appsettings.json); returns HTTP 401 Unauthorized with ProblemDetails on missing or incorrect PIN."
-verify = "Requests to admin endpoints without header or with wrong PIN return 401; valid PIN executes endpoint."
-covers = ["FR-19", "AD-6"]
+description = "Implement AdminAuthorizationFilter / attribute using PinHasher to validate X-Admin-PIN header against SHA-256 hash in appsettings.json across thin controller actions in AdminController and CheckoutsController; returns HTTP 401 Unauthorized with ProblemDetails on missing or incorrect PIN."
+verify = "Requests to secured controller actions without X-Admin-PIN header or with wrong PIN return 401 ProblemDetails; valid PIN allows action to proceed."
+covers = ["FR-19", "AD-6", "AD-11"]
 after = []
 hitl = false
 risk = "low"
@@ -16,9 +16,9 @@ notes = ["Scope: Must-Have"]
 id = 2
 type = "story"
 title = "Mark Asset Lost Endpoint"
-description = "Implement POST /api/admin/equipment/{id}/mark-lost secured by Admin PIN; transitions asset from Available, Out, or NeedsInspection to permanent Lost state, closing open checkout line if applicable."
-verify = "Asset transitions to Lost, is locked from checkout, and its open checkout line is closed."
-covers = ["FR-21", "AD-6"]
+description = "Implement POST /api/admin/equipment/{id}/mark-lost in AdminController delegating to AdminService; AdminService executes domain rules directly on DbContext to transition asset from Available, Out, or NeedsInspection to permanent Lost state and close any open checkout line; build mark-lost request/response DTOs in Dtos/ and hand-written mapping extension methods in Mapping/."
+verify = "Calling mark-lost endpoint on AdminController invokes AdminService, transitions asset to Lost, closes open checkout line, and returns mapped response DTO."
+covers = ["FR-21", "AD-6", "AD-11"]
 after = [1]
 hitl = false
 risk = "low"
@@ -28,9 +28,9 @@ notes = ["Scope: Must-Have"]
 id = 3
 type = "story"
 title = "Personnel Catalog Administration Endpoints"
-description = "Implement POST /api/admin/personnel, PUT /api/admin/personnel/{id}, and DELETE /api/admin/personnel/{id} (soft-delete IsActive = false; blocks hard delete if linked to history); secured by Admin PIN."
-verify = "Admin can add, update, and deactivate personnel; deactivated staff disappear from checkout roster."
-covers = ["FR-22", "AD-6"]
+description = "Implement POST /api/admin/personnel, PUT /api/admin/personnel/{id}, and DELETE /api/admin/personnel/{id} in AdminController (or PersonnelController) delegating to PersonnelService; service executes domain rules to add, update, and soft-delete personnel (IsActive = false, blocking hard delete if linked to history) directly on DbContext; build personnel management request and response DTOs in Dtos/ and hand-written mapping extension methods in Mapping/."
+verify = "Admin can add, update, and deactivate personnel via controller delegating to PersonnelService; returns mapped DTOs without leaking entities; deactivated staff disappear from checkout roster."
+covers = ["FR-22", "AD-6", "AD-11"]
 after = [1]
 hitl = false
 risk = "low"
@@ -40,9 +40,9 @@ notes = ["Scope: Must-Have"]
 id = 4
 type = "story"
 title = "Equipment Catalog & Counted Inventory Administration"
-description = "Implement POST /api/admin/equipment, PUT /api/admin/equipment/{id} (update details, toggle RequiresApproval, change ApproverId, adjust counted inventory totals), and DELETE /api/admin/equipment/{id} (soft-delete IsActive = false); secured by Admin PIN."
-verify = "Admin can adjust equipment details and toggle RequiresApproval; soft-deleted gear disappears from checkout."
-covers = ["FR-11", "FR-22", "AD-6"]
+description = "Implement POST /api/admin/equipment, PUT /api/admin/equipment/{id}, and DELETE /api/admin/equipment/{id} in AdminController delegating to AdminService; AdminService executes domain rules directly on DbContext to create equipment, update details, toggle RequiresApproval, assign ApproverId, adjust counted inventory totals, and soft-delete items (IsActive = false); build equipment admin request and response DTOs in Dtos/ and hand-written mapping extension methods in Mapping/."
+verify = "Admin can manage equipment catalog and adjust bulk totals via AdminController and AdminService; returns mapped DTOs without leaking entities; soft-deleted gear disappears from checkout."
+covers = ["FR-11", "FR-22", "AD-6", "AD-11"]
 after = [1]
 hitl = false
 risk = "low"

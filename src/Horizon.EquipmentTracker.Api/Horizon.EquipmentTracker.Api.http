@@ -1,0 +1,6 @@
+@Horizon.EquipmentTracker.Api_HostAddress = http://localhost:5186
+
+GET {{Horizon.EquipmentTracker.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

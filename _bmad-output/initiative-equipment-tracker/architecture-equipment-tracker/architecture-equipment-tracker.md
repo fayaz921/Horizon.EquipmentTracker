@@ -44,20 +44,24 @@ sources:
 
 The Horizon Equipment Tracker is structured as a **Two-Tier Modular Monolith** contained within a single repository: an ASP.NET Core Web API (.NET 8) and a React Single Page Application (Vite + TypeScript + Bootstrap 5.3). 
 
-To keep implementation strictly sized for a one-week sprint, the backend organizes code by functional concern within a single API project rather than splitting into multi-project Clean Architecture class libraries. The database layer uses Entity Framework Core 8 directly with `DbContext`, eliminating superfluous repository and unit-of-work abstractions.
+To keep implementation strictly sized for a one-week sprint, the backend organizes code by functional concern within a single API project rather than splitting into multi-project Clean Architecture class libraries. The database layer uses Entity Framework Core 8 directly with `DbContext`, eliminating superfluous repository and unit-of-work abstractions. Internal separation of concerns is enforced via layered folders (`Controllers/`, `Services/`, `Dtos/`, `Mapping/`, `Data/`, `Models/`, `Common/`) per AD-11.
 
 ```mermaid
 graph TD
-    Client["React SPA Client (Vite + TypeScript + Bootstrap)"] -->|"HTTP / JSON (REST API)"| WebApi["ASP.NET Core Web API (.NET 8)"]
-    WebApi -->|"Direct DbContext"| EFCore["Entity Framework Core 8"]
+    Client["React SPA Client (Vite + TypeScript + Bootstrap)"] -->|"HTTP / JSON (REST API)"| Controllers["Thin API Controllers"]
+    Controllers -->|"Call Service Operations"| Services["Domain Services (Services/)"]
+    Services -->|"Direct DbContext"| EFCore["Entity Framework Core 8"]
     EFCore -->|"SQL / T-SQL"| LocalDB["SQL Server LocalDB"]
 ```
 
 ### Layer & Directory Mapping
 
-- `src/Horizon.EquipmentTracker.Api/Controllers/`: HTTP endpoints exposing REST operations, input validation, and HTTP status codes.
+- `src/Horizon.EquipmentTracker.Api/Controllers/`: Thin HTTP endpoints exposing REST operations, performing input validation, and delegating workflows to domain services; return exclusively DTOs or ProblemDetails.
+- `src/Horizon.EquipmentTracker.Api/Services/`: Domain service classes encapsulating business rules (availability, approval gates, overdue evaluations, concurrency conflict handling) and directly accessing `EquipmentTrackerDbContext`.
+- `src/Horizon.EquipmentTracker.Api/Dtos/`: Strongly typed request and response contracts defining public API schemas; domain entities never cross controller boundaries.
+- `src/Horizon.EquipmentTracker.Api/Mapping/`: Hand-written static extension methods transforming between domain entities and DTOs without AutoMapper.
 - `src/Horizon.EquipmentTracker.Api/Data/`: `EquipmentTrackerDbContext`, entity type configurations, migrations, and database seed routines.
-- `src/Horizon.EquipmentTracker.Api/Models/`: Domain entities, request/response DTOs, and enumeration definitions.
+- `src/Horizon.EquipmentTracker.Api/Models/`: Domain entities and enumeration definitions.
 - `src/Horizon.EquipmentTracker.Api/Common/`: Cross-cutting helpers (Pakistan Standard Time date evaluator, PIN SHA-256 hasher, custom exception handling).
 - `src/client/src/api/`: Typed HTTP client functions invoking API endpoints using the browser Fetch API.
 - `src/client/src/components/`: Modular React components corresponding to operational workflows (Dashboard, CheckoutModal, ReturnModal, ApprovalsQueue, HistoryTable, AdminPanel).
@@ -77,14 +81,23 @@ graph LR
     end
 
     subgraph Server ["src/Horizon.EquipmentTracker.Api"]
-        Controllers[API Controllers]
+        Controllers[Thin API Controllers]
+        Services[Domain Services]
+        Mapping[Mapping Extensions]
+        Dtos[Request / Response DTOs]
         DbContext[EquipmentTrackerDbContext]
-        Entities[Domain Entities & DTOs]
+        Entities[Domain Entities & Enums]
         Common[Common Utilities / PKT Time]
 
         APIClient -->|HTTP / JSON| Controllers
-        Controllers --> DbContext
-        Controllers --> Common
+        Controllers --> Services
+        Controllers --> Dtos
+        Services --> DbContext
+        Services --> Entities
+        Services --> Mapping
+        Services --> Common
+        Mapping --> Entities
+        Mapping --> Dtos
         DbContext --> Entities
     end
 
@@ -98,7 +111,7 @@ graph LR
 
 - **Binds:** all backend code, FR-1 through FR-23
 - **Prevents:** multi-project abstraction overhead, circular dependencies, and project setup drag for a 1-week timeline
-- **Rule:** All server-side code must reside in the single project `src/Horizon.EquipmentTracker.Api`. Do not create separate `.Domain`, `.Application`, or `.Infrastructure` projects. API endpoints are exposed exclusively through ASP.NET Core `[ApiController]`-decorated controller classes (one class per functional domain: `CheckoutsController`, `ReturnsController`, `ApprovalsController`, `EquipmentController`, `PersonnelController`, `HistoryController`, `AdminController`). Minimal API route groups are not used.
+- **Rule:** All server-side code must reside in the single project `src/Horizon.EquipmentTracker.Api`. Do not create separate `.Domain`, `.Application`, or `.Infrastructure` projects. Internal separation of concerns is maintained via layered folders per AD-11. API endpoints are exposed exclusively through ASP.NET Core `[ApiController]`-decorated controller classes (one class per functional domain: `CheckoutsController`, `ReturnsController`, `ApprovalsController`, `EquipmentController`, `PersonnelController`, `HistoryController`, `AdminController`). Controllers remain thin and delegate domain workflows to services in `Services/`. Minimal API route groups are not used.
 
 ### AD-2 — Canonical Timezone and Business Date Boundary [ADOPTED]
 
@@ -110,7 +123,7 @@ graph LR
 
 - **Binds:** FR-1, FR-6, FR-7, FR-8, FR-10, FR-11, FR-12
 - **Prevents:** Incompatible entity tracking models; overselling counted inventory; duplicate state transitions on serialized items (double-checkout, double-approve) under concurrent requests
-- **Rule:** Model individually tracked assets as `SerializedEquipment` records with a discrete lifecycle state machine (`Available`, `Out`, `PendingApproval`, `NeedsInspection`, `Lost`, `Deactivated`). Model shared bulk tools as `CountedInventory` records tracking integer pools (`TotalQuantity`, `QuantityOut`, `QuantityInInspection`). EF Core `RowVersion` (`byte[]`, mapped as SQL `rowversion`/`timestamp`) must be applied to all three concurrency-sensitive entities: `CountedInventory`, `SerializedEquipment`, and `CheckoutLine` (approval transitions). When EF Core throws `DbUpdateConcurrencyException`, controllers must catch it and return HTTP 409 Conflict with a `ProblemDetails` body whose `detail` is a user-readable message (e.g. `"This item was just updated by another request. Please refresh and try again."`). The React UI must surface this message in the active modal so the surveyor knows to retry.
+- **Rule:** Model individually tracked assets as `SerializedEquipment` records with a discrete lifecycle state machine (`Available`, `Out`, `PendingApproval`, `NeedsInspection`, `Lost`, `Deactivated`). Model shared bulk tools as `CountedInventory` records tracking integer pools (`TotalQuantity`, `QuantityOut`, `QuantityInInspection`). EF Core `RowVersion` (`byte[]`, mapped as SQL `rowversion`/`timestamp`) must be applied to all three concurrency-sensitive entities: `CountedInventory`, `SerializedEquipment`, and `CheckoutLine` (approval transitions). Concurrency conflicts and domain rules are managed inside domain services under `Services/`; when EF Core throws `DbUpdateConcurrencyException`, controllers catch it or translate it to HTTP 409 Conflict with a `ProblemDetails` body whose `detail` is a user-readable message (e.g. `"This item was just updated by another request. Please refresh and try again."`). The React UI must surface this message in the active modal so the surveyor knows to retry.
 
 ### AD-4 — Trust-First Passwordless Field Attribution [ADOPTED]
 
@@ -154,6 +167,16 @@ graph LR
 - **Prevents:** Manual SQL database setup, missing seed catalogs, and cold-start configuration drift
 - **Rule:** On application boot in `Program.cs`, the backend automatically calls `context.Database.Migrate()` to apply all pending EF Core migrations. If `!context.Personnel.Any()`, the API executes `DatabaseSeeder.SeedAsync()` to populate realistic seed personnel, serialized equipment, counted inventory pools, kit templates, demo checkouts (including one overdue checkout and one historical checkout), and SHA-256 hashed default PIN credentials (`9999` for Admin, `1234` for Hamza).
 
+### AD-11 — Layered Folders, Thin Controllers, and Service Boundary [ADOPTED]
+
+- **Binds:** all backend code, FR-1 through FR-23
+- **Prevents:** Bloated controller actions, domain rule fragmentation, leaking database entities across API contracts, reflection mapping overhead/runtime exceptions, and redundant repository/unit-of-work abstractions
+- **Rule:** The single backend project `src/Horizon.EquipmentTracker.Api` organizes code into distinct layered folders:
+  - **Controllers (`Controllers/`)**: Controllers must remain thin HTTP adapters. They handle routing, request binding, model validation, invoking domain services, and returning HTTP status codes. Controllers never interact with `EquipmentTrackerDbContext` directly and never return domain entities. They return exclusively DTOs (`Dtos/`) or `ProblemDetails`.
+  - **Services (`Services/`)**: All business logic and domain rules—including asset availability checks, approval eligibility, PKT overdue calculations, and concurrency conflict handling—must live in service classes under `Services/` (`CheckoutService`, `ReturnService`, `ApprovalService`, `EquipmentService`, `PersonnelService`, `HistoryService`, `AdminService`). Services use `EquipmentTrackerDbContext` directly with no repository or unit-of-work wrappers, as EF Core's `DbContext` is already a repository and unit of work.
+  - **DTOs (`Dtos/`)**: Strongly typed request and response contracts defining the external API schema. Entities never cross the controller boundary.
+  - **Mapping (`Mapping/`)**: Transformations between domain entities and DTOs must be executed via hand-written static extension methods located in `Mapping/`. AutoMapper and reflection-based dynamic mappers are prohibited.
+
 ---
 
 ## Consistency Conventions
@@ -167,6 +190,8 @@ graph LR
 | Identifiers | Integer primary keys (`int Id`) with database identity autoincrement for simplicity and low overhead. |
 | Date & Time Formats | Timestamps in ISO-8601 UTC string format (`2026-10-23T07:30:00Z`); business dates in ISO-8601 format (`yyyy-MM-dd`). |
 | API Error Responses | Standard ASP.NET Core `ProblemDetails` JSON responses with `title`, `status`, `detail`, and `errors`. Concurrency conflicts always return HTTP 409 with a human-readable `detail`. |
+| Controller & Service Layering | Controllers stay thin, delegating to `Services/` and returning DTOs; business logic lives exclusively in services; services consume `DbContext` directly without repository wrappers (AD-11). |
+| DTO & Mapping Separation | Domain entities are never returned from controllers; request/response DTOs reside in `Dtos/`; mappings are hand-written static extension methods in `Mapping/` without AutoMapper (AD-11). |
 | Client State Management | React server state managed exclusively via typed native `fetch` inside custom `use*` hooks (e.g. `useEquipment`, `useCheckouts`). No external state-management library or data-fetching library is added. |
 | Concurrency Error Surfacing | HTTP 409 responses from the API must be detected in the fetch wrapper and surfaced as an inline error message within the currently open modal (not as a full-page error or silent failure), so the user can refresh and retry without losing context. |
 
@@ -291,10 +316,12 @@ e:\horizon-equipment-tracker\
 │   │   │   ├── DatabaseSeeder.cs
 │   │   │   ├── EquipmentTrackerDbContext.cs
 │   │   │   └── Migrations\
+│   │   ├── Dtos\
+│   │   ├── Mapping\
 │   │   ├── Models\
-│   │   │   ├── DTOs\
 │   │   │   ├── Entities\
 │   │   │   └── Enums\
+│   │   ├── Services\
 │   │   ├── appsettings.json
 │   │   ├── Horizon.EquipmentTracker.Api.csproj
 │   │   └── Program.cs
@@ -342,28 +369,28 @@ e:\horizon-equipment-tracker\
 
 | Capability / Requirement | Lives in | Governed by |
 | --- | --- | --- |
-| FR-1: Passwordless Recipient Selection & Multi-Line Submission | `CheckoutsController`, `CheckoutModal.tsx` | AD-1, AD-4 |
-| FR-2: Dual Attribution Logging (`RecipientId`, `LoggedById`) | `CheckoutEvent`, `CheckoutLine`, `CheckoutsController` | AD-4 |
-| FR-3: Survey Kit Configuration Templates | `SurveyKit`, `CheckoutsController`, `CheckoutModal.tsx` | AD-1 |
-| FR-4: Mandatory Expected Return Date with Quick Selectors | `CheckoutLine`, `DateTimeExtensions`, `dateUtils.ts` | AD-2 |
-| FR-5: Real-Time Equipment Custody Grid | `EquipmentController`, `DashboardBoard.tsx` | AD-1, AD-3 |
-| FR-6: Counted Inventory Pool Visualization | `CountedInventory`, `DashboardBoard.tsx` | AD-3 |
-| FR-7: Status-Based Checkout Lockouts | `EquipmentTrackerDbContext`, `CheckoutsController` | AD-3 |
-| FR-8: Per-Line and Partial Quantity Returns | `ReturnsController`, `ReturnModal.tsx` | AD-3, AD-7 |
-| FR-9: Mandatory Condition Prompt (`Good` vs `Damaged`) | `ReturnModal.tsx`, `ReturnsController` | AD-7 |
-| FR-10: Immediate Damage Quarantine (`NeedsInspection`) | `ReturnsController`, `SerializedEquipment` | AD-7 |
-| FR-11: Configurable Per-Item Approval Gate | `SerializedEquipment`, `AdminController` | AD-5, AD-6 |
-| FR-12: Pending Approval Queue & Cancellation | `ApprovalsController`, `ApprovalsQueue.tsx` | AD-5 |
-| FR-13: Approver PIN Verification & Custody Release | `ApprovalsController`, `PinHasher.cs` | AD-5 |
-| FR-14: Overdue Asset Calculation in PKT | `DateTimeExtensions.cs`, `DashboardBoard.tsx` | AD-2, AD-8 |
+| FR-1: Passwordless Recipient Selection & Multi-Line Submission | `CheckoutsController`, `CheckoutService`, `CheckoutModal.tsx` | AD-1, AD-4, AD-11 |
+| FR-2: Dual Attribution Logging (`RecipientId`, `LoggedById`) | `CheckoutEvent`, `CheckoutLine`, `CheckoutService` | AD-4, AD-11 |
+| FR-3: Survey Kit Configuration Templates | `SurveyKit`, `CheckoutService`, `CheckoutModal.tsx` | AD-1, AD-11 |
+| FR-4: Mandatory Expected Return Date with Quick Selectors | `CheckoutLine`, `CheckoutService`, `DateTimeExtensions`, `dateUtils.ts` | AD-2, AD-11 |
+| FR-5: Real-Time Equipment Custody Grid | `EquipmentController`, `EquipmentService`, `DashboardBoard.tsx` | AD-1, AD-3, AD-11 |
+| FR-6: Counted Inventory Pool Visualization | `CountedInventory`, `EquipmentService`, `DashboardBoard.tsx` | AD-3, AD-11 |
+| FR-7: Status-Based Checkout Lockouts | `CheckoutService`, `EquipmentTrackerDbContext`, `CheckoutsController` | AD-3, AD-11 |
+| FR-8: Per-Line and Partial Quantity Returns | `ReturnsController`, `ReturnService`, `ReturnModal.tsx` | AD-3, AD-7, AD-11 |
+| FR-9: Mandatory Condition Prompt (`Good` vs `Damaged`) | `ReturnModal.tsx`, `ReturnsController`, `ReturnService` | AD-7, AD-11 |
+| FR-10: Immediate Damage Quarantine (`NeedsInspection`) | `ReturnService`, `SerializedEquipment` | AD-7, AD-11 |
+| FR-11: Configurable Per-Item Approval Gate | `SerializedEquipment`, `AdminService` | AD-5, AD-6, AD-11 |
+| FR-12: Pending Approval Queue & Cancellation | `ApprovalsController`, `ApprovalService`, `ApprovalsQueue.tsx` | AD-5, AD-11 |
+| FR-13: Approver PIN Verification & Custody Release | `ApprovalsController`, `ApprovalService`, `PinHasher.cs` | AD-5, AD-11 |
+| FR-14: Overdue Asset Calculation in PKT | `DateTimeExtensions.cs`, `EquipmentService`, `DashboardBoard.tsx` | AD-2, AD-8, AD-11 |
 | FR-15: One-Click WhatsApp (`wa.me`) Reminder Generation | `whatsapp.ts`, `DashboardBoard.tsx` | AD-9 |
-| FR-16: Due Date Extension Authority & Revision Log | `DueDateExtensionLog`, `CheckoutsController`, `ExtensionModal.tsx` | AD-6, AD-8 |
-| FR-17: On-Screen Retrospective Custody Table with Interval Overlap | `HistoryController`, `HistoryTable.tsx` | AD-2 |
-| FR-18: Multi-Criteria Filter Presets (`This Month`, `Last Month`) | `HistoryController`, `HistoryTable.tsx` | AD-2 |
-| FR-19: Admin PIN Protection for Privileged Operations | `AdminController`, `AdminModal.tsx`, `PinHasher.cs` | AD-6 |
-| FR-20: Inspection Clearance Workflow | `AdminController`, `SerializedEquipment` | AD-6, AD-7 |
-| FR-21: Permanent Loss Flagging (`Lost` State) | `AdminController`, `SerializedEquipment` | AD-6 |
-| FR-22: Personnel & Equipment Catalog Administration | `AdminController`, `PersonnelController` | AD-6 |
+| FR-16: Due Date Extension Authority & Revision Log | `DueDateExtensionLog`, `CheckoutService`, `ExtensionModal.tsx` | AD-6, AD-8, AD-11 |
+| FR-17: On-Screen Retrospective Custody Table with Interval Overlap | `HistoryController`, `HistoryService`, `HistoryTable.tsx` | AD-2, AD-11 |
+| FR-18: Multi-Criteria Filter Presets (`This Month`, `Last Month`) | `HistoryController`, `HistoryService`, `HistoryTable.tsx` | AD-2, AD-11 |
+| FR-19: Admin PIN Protection for Privileged Operations | `AdminController`, `AdminService`, `AdminModal.tsx`, `PinHasher.cs` | AD-6, AD-11 |
+| FR-20: Inspection Clearance Workflow | `AdminService`, `SerializedEquipment` | AD-6, AD-7, AD-11 |
+| FR-21: Permanent Loss Flagging (`Lost` State) | `AdminService`, `SerializedEquipment` | AD-6, AD-11 |
+| FR-22: Personnel & Equipment Catalog Administration | `AdminService`, `PersonnelService`, `PersonnelController` | AD-6, AD-11 |
 | FR-23: First-Run Database Auto-Seeding | `Program.cs`, `DatabaseSeeder.cs` | AD-10 |
 
 ---
