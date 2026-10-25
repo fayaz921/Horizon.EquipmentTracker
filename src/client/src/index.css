@@ -1,0 +1,39 @@
+:root {
+  --hor-primary: #0d6efd;
+  --hor-surface: #f8f9fa;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--hor-surface);
+}
+
+/* Large tap targets for mobile */
+.btn {
+  min-height: 36px;
+}
+
+.btn-lg {
+  min-height: 48px;
+}
+
+/* Smooth modal backdrop */
+.modal.show.d-block {
+  animation: fadeIn 150ms ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Table row hover */
+.table-hover tbody tr:hover {
+  background-color: rgba(13, 110, 253, 0.06);
+  cursor: default;
+}
+
+/* Card subtle shadow */
+.card {
+  transition: box-shadow 150ms ease;
+}
