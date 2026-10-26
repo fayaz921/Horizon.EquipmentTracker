@@ -18,6 +18,7 @@ import {
   adminCreatePersonnel,
   adminUpdatePersonnel,
   adminDeactivatePersonnel,
+  verifyAdminPin,
   ApiError,
 } from '../api/apiClient'
 import { PageHeader, EmptyState, Avatar } from './ui'
@@ -34,6 +35,7 @@ export default function AdminTab({ onToast, onCatalogUpdated }: AdminTabProps) {
   const [adminPin, setAdminPin] = useState<string | null>(null)
   const [pinInput, setPinInput] = useState('')
   const [pinError, setPinError] = useState<string | null>(null)
+  const [verifyingPin, setVerifyingPin] = useState(false)
 
   const [activeSection, setActiveSection] = useState<AdminSection>('inspection')
   const [equipment, setEquipment] = useState<EquipmentAvailabilityDto | null>(null)
@@ -109,15 +111,31 @@ export default function AdminTab({ onToast, onCatalogUpdated }: AdminTabProps) {
     }
   }, [adminPin, loadData])
 
-  function handleUnlock(e: React.FormEvent) {
+  async function handleUnlock(e: React.FormEvent) {
     e.preventDefault()
-    if (!pinInput.trim()) {
+    const entered = pinInput.trim()
+    if (!entered) {
       setPinError('Please enter the Admin PIN.')
       return
     }
     setPinError(null)
-    setAdminPin(pinInput.trim())
-    setPinInput('')
+    setVerifyingPin(true)
+    try {
+      await verifyAdminPin(entered)
+      setAdminPin(entered)
+      setPinInput('')
+    } catch (err: unknown) {
+      setPinInput('')
+      if (err instanceof ApiError && err.status === 401) {
+        setPinError('Invalid Admin PIN')
+      } else if (err instanceof ApiError) {
+        setPinError(err.problem?.detail || err.problem?.title || 'Invalid Admin PIN')
+      } else {
+        setPinError('Invalid Admin PIN')
+      }
+    } finally {
+      setVerifyingPin(false)
+    }
   }
 
   function handleLock() {
@@ -411,13 +429,28 @@ export default function AdminTab({ onToast, onCatalogUpdated }: AdminTabProps) {
                   autoComplete="off"
                   autoFocus
                   required
+                  disabled={verifyingPin}
                 />
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary w-100 fw-semibold" style={{ minHeight: 42 }}>
-              <i className="bi bi-unlock me-1" />
-              Unlock Controls
+            <button
+              type="submit"
+              className="btn btn-primary w-100 fw-semibold"
+              style={{ minHeight: 42 }}
+              disabled={verifyingPin}
+            >
+              {verifyingPin ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true" />
+                  Verifying...
+                </>
+              ) : (
+                <>
+                  <i className="bi bi-unlock me-1" />
+                  Unlock Controls
+                </>
+              )}
             </button>
           </form>
         </div>

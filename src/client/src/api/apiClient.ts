@@ -36,16 +36,28 @@ export class ApiError extends Error {
 }
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
+  const { headers: customHeaders, ...restInit } = init ?? {}
   const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
-    ...init,
+    ...restInit,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(customHeaders as Record<string, string> | undefined),
+    },
   })
 
   if (res.status === 204) return undefined as unknown as T
-  const body = await res.json() as unknown
+  let body: unknown = undefined
+  try {
+    body = await res.json()
+  } catch {
+    // Non-JSON or empty response body
+  }
 
   if (!res.ok) {
-    throw new ApiError(res.status, body as ProblemDetails)
+    throw new ApiError(
+      res.status,
+      (body as ProblemDetails) ?? { status: res.status, title: res.statusText },
+    )
   }
   return body as T
 }
@@ -86,12 +98,12 @@ export const extendCheckoutLine = (
   adminPin?: string,
 ): Promise<DueDateExtensionResponseDto> => {
   const headers: Record<string, string> = {}
-  if (adminPin) {
-    headers['X-Admin-PIN'] = adminPin
+  if (adminPin && adminPin.trim()) {
+    headers['X-Admin-PIN'] = adminPin.trim()
   }
   return request<DueDateExtensionResponseDto>(`/api/checkouts/${lineId}/extend`, {
     method: 'POST',
-    headers,
+    headers: Object.keys(headers).length > 0 ? headers : undefined,
     body: JSON.stringify(body),
   })
 }
@@ -229,4 +241,11 @@ export const adminDeactivateEquipment = (
     method: 'DELETE',
     headers: { 'X-Admin-PIN': adminPin },
   })
+
+export const verifyAdminPin = (adminPin: string): Promise<void> =>
+  request<void>('/api/admin/verify-pin', {
+    method: 'POST',
+    headers: { 'X-Admin-PIN': adminPin.trim() },
+  })
+
 

@@ -291,4 +291,21 @@ public class AdminController : ControllerBase
             return Problem(detail: ex.Message, statusCode: 404, title: "Equipment Not Found");
         }
     }
+
+    // -----------------------------------------------------------------------
+    // Admin PIN Verification
+    // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// POST /api/admin/verify-pin — Verifies the X-Admin-PIN header.
+    /// Secured by X-Admin-PIN header via AdminAuthorize attribute.
+    /// </summary>
+    [HttpPost("verify-pin")]
+    [ProducesResponseType(204)]
+    [ProducesResponseType(typeof(ProblemDetails), 401)]
+    public IActionResult VerifyPin()
+    {
+        return NoContent();
+    }
 }
+
