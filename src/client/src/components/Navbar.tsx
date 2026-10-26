@@ -56,6 +56,58 @@ export default function Navbar({ activeView, onNav, pendingCount = 0 }: NavbarPr
             </button>
 
             <button
+              id="nav-approvals"
+              type="button"
+              className={`btn btn-sm px-3 ${
+                activeView === 'approvals'
+                  ? 'btn-light text-dark fw-semibold'
+                  : 'btn-link text-white text-decoration-none'
+              }`}
+              style={activeView !== 'approvals' ? { opacity: 0.85 } : undefined}
+              onClick={() => onNav('approvals')}
+            >
+              <i className="bi bi-shield-check me-1" aria-hidden="true" />
+              Approvals
+              {pendingCount > 0 && (
+                <span className="badge rounded-pill bg-warning text-dark ms-1.5 tabular-nums">
+                  {pendingCount}
+                </span>
+              )}
+            </button>
+
+            <button
+              id="nav-history"
+              type="button"
+              className={`btn btn-sm px-3 ${
+                activeView === 'history'
+                  ? 'btn-light text-dark fw-semibold'
+                  : 'btn-link text-white text-decoration-none'
+              }`}
+              style={activeView !== 'history' ? { opacity: 0.85 } : undefined}
+              onClick={() => onNav('history')}
+            >
+              <i className="bi bi-clock-history me-1" aria-hidden="true" />
+              History
+            </button>
+
+            <button
+              id="nav-admin"
+              type="button"
+              className={`btn btn-sm px-3 ${
+                activeView === 'admin'
+                  ? 'btn-light text-dark fw-semibold'
+                  : 'btn-link text-white text-decoration-none'
+              }`}
+              style={activeView !== 'admin' ? { opacity: 0.85 } : undefined}
+              onClick={() => onNav('admin')}
+            >
+              <i className="bi bi-gear me-1" aria-hidden="true" />
+              Admin
+            </button>
+
+            <div className="vr bg-white opacity-25 mx-1" style={{ height: 20 }} />
+
+            <button
               id="nav-return"
               type="button"
               className={`btn btn-sm px-3 ${
@@ -70,21 +122,6 @@ export default function Navbar({ activeView, onNav, pendingCount = 0 }: NavbarPr
               Return
             </button>
 
-            {pendingCount > 0 && (
-              <button
-                id="nav-approvals"
-                type="button"
-                className="btn btn-sm btn-outline-warning position-relative px-3"
-                onClick={() => onNav('approvals')}
-              >
-                <i className="bi bi-shield-check me-1" aria-hidden="true" />
-                Approvals
-                <span className="badge rounded-pill bg-warning text-dark ms-1.5 tabular-nums">
-                  {pendingCount}
-                </span>
-              </button>
-            )}
-
             <button
               id="nav-checkout"
               type="button"
@@ -96,21 +133,45 @@ export default function Navbar({ activeView, onNav, pendingCount = 0 }: NavbarPr
             </button>
           </div>
 
-          {/* Mobile Right: Approvals button or quick icon */}
-          <div className="d-flex d-md-none align-items-center gap-2">
-            {pendingCount > 0 && (
-              <button
-                type="button"
-                className="btn btn-sm btn-outline-warning position-relative py-1 px-2"
-                onClick={() => onNav('approvals')}
-                aria-label={`Approvals (${pendingCount})`}
-              >
-                <i className="bi bi-shield-check" aria-hidden="true" />
-                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark tabular-nums">
+          {/* Mobile Right: Quick Tab Icons */}
+          <div className="d-flex d-md-none align-items-center gap-1">
+            <button
+              type="button"
+              className={`btn btn-sm py-1 px-2 ${activeView === 'board' ? 'btn-light text-dark' : 'btn-link text-white'}`}
+              onClick={() => onNav('board')}
+              aria-label="Board"
+            >
+              <i className="bi bi-grid-1x2" />
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm py-1 px-2 position-relative ${activeView === 'approvals' ? 'btn-light text-dark' : 'btn-link text-white'}`}
+              onClick={() => onNav('approvals')}
+              aria-label="Approvals"
+            >
+              <i className="bi bi-shield-check" />
+              {pendingCount > 0 && (
+                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark tabular-nums" style={{ fontSize: '0.65rem' }}>
                   {pendingCount}
                 </span>
-              </button>
-            )}
+              )}
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm py-1 px-2 ${activeView === 'history' ? 'btn-light text-dark' : 'btn-link text-white'}`}
+              onClick={() => onNav('history')}
+              aria-label="History"
+            >
+              <i className="bi bi-clock-history" />
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm py-1 px-2 ${activeView === 'admin' ? 'btn-light text-dark' : 'btn-link text-white'}`}
+              onClick={() => onNav('admin')}
+              aria-label="Admin"
+            >
+              <i className="bi bi-gear" />
+            </button>
           </div>
         </div>
       </header>

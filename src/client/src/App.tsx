@@ -2,15 +2,17 @@ import { useState, useEffect } from 'react'
 import type { ActiveCustodyLineDto } from './types'
 import Navbar from './components/Navbar'
 import DashboardBoard from './components/DashboardBoard'
+import ApprovalsTab from './components/ApprovalsTab'
+import HistoryTab from './components/HistoryTab'
+import AdminTab from './components/AdminTab'
 import CheckoutModal from './components/CheckoutModal'
 import ReturnModal from './components/ReturnModal'
 import { fetchPendingApprovals } from './api/apiClient'
 import { ToastContainer, type ToastMessage } from './components/ui/Toast'
 
-type View = 'board' | 'checkout' | 'return' | 'approvals'
-
 export default function App() {
-  const [view, setView] = useState<View>('board')
+  const [activeTab, setActiveTab] = useState<'board' | 'approvals' | 'history' | 'admin'>('board')
+  const [modalView, setModalView] = useState<'checkout' | 'return' | null>(null)
   const [boardKey, setBoardKey] = useState(0)
   const [preselectedReturnLine, setPreselectedReturnLine] = useState<ActiveCustodyLineDto | null>(null)
   const [pendingCount, setPendingCount] = useState(0)
@@ -28,24 +30,29 @@ export default function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id))
   }
 
-  useEffect(() => {
+  function updatePendingCount() {
     fetchPendingApprovals()
       .then((list) => setPendingCount(list.length))
       .catch(() => setPendingCount(0))
+  }
+
+  useEffect(() => {
+    updatePendingCount()
   }, [boardKey])
 
   function refreshBoard() {
     setBoardKey((k) => k + 1)
+    updatePendingCount()
   }
 
   function handleReturnFromBoard(line: ActiveCustodyLineDto) {
     setPreselectedReturnLine(line)
-    setView('return')
+    setModalView('return')
   }
 
   function handleCheckoutSuccess() {
     refreshBoard()
-    setView('board')
+    setModalView(null)
     addToast('success', 'Checkout Complete', 'Equipment custody event successfully logged in the system.')
   }
 
@@ -54,44 +61,71 @@ export default function App() {
     addToast('success', 'Return Processed', 'Returned equipment has been restored to available inventory.')
   }
 
+  function handleNav(view: string) {
+    if (view === 'checkout') {
+      setModalView('checkout')
+    } else if (view === 'return') {
+      setPreselectedReturnLine(null)
+      setModalView('return')
+    } else if (view === 'board' || view === 'approvals' || view === 'history' || view === 'admin') {
+      setActiveTab(view)
+      setModalView(null)
+    }
+  }
+
   return (
     <div className="min-vh-100 d-flex flex-column" style={{ backgroundColor: 'var(--hor-bg)' }}>
       <Navbar
-        activeView={view}
-        onNav={(v) => {
-          if (v === 'approvals') {
-            // For now, if approvals clicked, stay on board and focus items requiring attention
-            setView('board')
-            const el = document.getElementById('items-requiring-attention')
-            el?.scrollIntoView({ behavior: 'smooth' })
-          } else {
-            setView(v as View)
-          }
-        }}
+        activeView={modalView ?? activeTab}
+        onNav={handleNav}
         pendingCount={pendingCount}
       />
 
       <main className="container-fluid flex-grow-1 py-4 px-3 px-md-4 pb-5 mb-5 mb-md-0" style={{ maxWidth: 1280 }}>
-        <DashboardBoard
-          key={boardKey}
-          onReturnClick={handleReturnFromBoard}
-        />
+        {activeTab === 'board' && (
+          <DashboardBoard
+            key={boardKey}
+            onReturnClick={handleReturnFromBoard}
+            onExtendSuccess={(msg) => {
+              refreshBoard()
+              addToast('success', 'Due Date Extended', msg)
+            }}
+          />
+        )}
+
+        {activeTab === 'approvals' && (
+          <ApprovalsTab
+            onQueueUpdated={refreshBoard}
+            onToast={addToast}
+          />
+        )}
+
+        {activeTab === 'history' && (
+          <HistoryTab />
+        )}
+
+        {activeTab === 'admin' && (
+          <AdminTab
+            onToast={addToast}
+            onCatalogUpdated={refreshBoard}
+          />
+        )}
       </main>
 
       {/* Checkout Modal */}
-      {view === 'checkout' && (
+      {modalView === 'checkout' && (
         <CheckoutModal
-          onClose={() => setView('board')}
+          onClose={() => setModalView(null)}
           onSuccess={handleCheckoutSuccess}
         />
       )}
 
       {/* Return Modal */}
-      {view === 'return' && (
+      {modalView === 'return' && (
         <ReturnModal
           onClose={() => {
             setPreselectedReturnLine(null)
-            setView('board')
+            setModalView(null)
           }}
           onSuccess={handleReturnSuccess}
           preselectedLine={preselectedReturnLine}

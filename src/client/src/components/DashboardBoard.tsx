@@ -3,9 +3,12 @@ import type { ActiveCustodyLineDto, EquipmentAvailabilityDto } from '../types'
 import { formatDate, formatTimestampPkt } from '../utils/dateUtils'
 import { useBoardData } from '../hooks/useData'
 import { Avatar, StatusBadge, KpiCard, EmptyState, PageHeader } from './ui'
+import ExtensionModal from './ExtensionModal'
+import { openWhatsAppReminder } from '../utils/whatsapp'
 
 interface DashboardBoardProps {
   onReturnClick?: (line: ActiveCustodyLineDto) => void
+  onExtendSuccess?: (message: string) => void
 }
 
 type FilterMode = 'all' | 'dueToday' | 'overdue' | 'pending' | 'inspection'
@@ -204,10 +207,11 @@ function SpecialStatusItems({ equipment }: { equipment: EquipmentAvailabilityDto
   )
 }
 
-export default function DashboardBoard({ onReturnClick }: DashboardBoardProps) {
+export default function DashboardBoard({ onReturnClick, onExtendSuccess }: DashboardBoardProps) {
   const { custodyLines, equipment, loading, error, refresh } = useBoardData()
   const [filterMode, setFilterMode] = useState<FilterMode>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [extendingLine, setExtendingLine] = useState<ActiveCustodyLineDto | null>(null)
 
   // KPI calculations
   const overdueCount = useMemo(() => custodyLines.filter((l) => l.isOverdue).length, [custodyLines])
@@ -468,13 +472,13 @@ export default function DashboardBoard({ onReturnClick }: DashboardBoardProps) {
               <table className="table table-hover align-middle mb-0">
                 <thead style={{ backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
                   <tr className="text-secondary small fw-semibold text-uppercase" style={{ letterSpacing: '0.04em', fontSize: '0.72rem' }}>
-                    <th className="ps-3 py-3" style={{ width: '22%' }}>Holder</th>
-                    <th className="py-3" style={{ width: '25%' }}>Item</th>
-                    <th className="py-3 text-center" style={{ width: '8%' }}>Qty</th>
-                    <th className="py-3" style={{ width: '15%' }}>Due</th>
-                    <th className="py-3" style={{ width: '15%' }}>Status</th>
-                    <th className="py-3 text-muted" style={{ width: '15%' }}>Checked Out</th>
-                    <th className="pe-3 py-3 text-end" style={{ width: '10%' }}>Action</th>
+                    <th className="ps-3 py-3" style={{ width: '20%' }}>Holder</th>
+                    <th className="py-3" style={{ width: '22%' }}>Item</th>
+                    <th className="py-3 text-center" style={{ width: '6%' }}>Qty</th>
+                    <th className="py-3" style={{ width: '13%' }}>Due</th>
+                    <th className="py-3" style={{ width: '13%' }}>Status</th>
+                    <th className="py-3 text-muted" style={{ width: '12%' }}>Checked Out</th>
+                    <th className="pe-3 py-3 text-end" style={{ width: '14%', minWidth: 160 }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -535,17 +539,48 @@ export default function DashboardBoard({ onReturnClick }: DashboardBoardProps) {
                         </td>
 
                         <td className="pe-3 py-2.5 text-end">
-                          {onReturnClick && (
+                          <div className="d-inline-flex align-items-center justify-content-end gap-1.5">
+                            {/* WhatsApp button on Due Today and Overdue lines */}
+                            {(line.isDueToday || line.isOverdue) && line.whatsAppReminderUrl && (
+                              <button
+                                id={`whatsapp-btn-${line.lineId}`}
+                                type="button"
+                                className="btn btn-sm btn-outline-success text-success fw-semibold px-2"
+                                style={{ minHeight: 32 }}
+                                onClick={() => openWhatsAppReminder(line.whatsAppReminderUrl)}
+                                title="Send WhatsApp Reminder"
+                              >
+                                <i className="bi bi-whatsapp" aria-hidden="true" />
+                              </button>
+                            )}
+
+                            {/* Extend Action */}
                             <button
-                              id={`return-btn-${line.lineId}`}
+                              id={`extend-btn-${line.lineId}`}
                               type="button"
-                              className="btn btn-sm btn-outline-warning text-dark fw-semibold px-3"
-                              onClick={() => onReturnClick(line)}
+                              className="btn btn-sm btn-outline-primary fw-semibold px-2.5"
+                              style={{ minHeight: 32 }}
+                              onClick={() => setExtendingLine(line)}
+                              title="Extend Due Date"
                             >
-                              <i className="bi bi-arrow-return-left me-1" aria-hidden="true" />
-                              Return
+                              <i className="bi bi-calendar-plus me-1" aria-hidden="true" />
+                              Extend
                             </button>
-                          )}
+
+                            {/* Return Action */}
+                            {onReturnClick && (
+                              <button
+                                id={`return-btn-${line.lineId}`}
+                                type="button"
+                                className="btn btn-sm btn-outline-warning text-dark fw-semibold px-2.5"
+                                style={{ minHeight: 32 }}
+                                onClick={() => onReturnClick(line)}
+                              >
+                                <i className="bi bi-arrow-return-left me-1" aria-hidden="true" />
+                                Return
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     )
@@ -596,18 +631,42 @@ export default function DashboardBoard({ onReturnClick }: DashboardBoardProps) {
                       <span className="tabular-nums">{formatTimestampPkt(line.checkoutTimestamp)}</span>
                     </div>
 
-                    {onReturnClick && (
+                    <div className="d-flex flex-wrap align-items-center gap-2">
+                      {(line.isDueToday || line.isOverdue) && line.whatsAppReminderUrl && (
+                        <button
+                          id={`mobile-whatsapp-btn-${line.lineId}`}
+                          type="button"
+                          className="btn btn-sm btn-outline-success text-success fw-semibold flex-grow-1"
+                          style={{ minHeight: 40 }}
+                          onClick={() => openWhatsAppReminder(line.whatsAppReminderUrl)}
+                        >
+                          <i className="bi bi-whatsapp me-1" aria-hidden="true" />
+                          WhatsApp
+                        </button>
+                      )}
                       <button
-                        id={`return-btn-${line.lineId}`}
+                        id={`mobile-extend-btn-${line.lineId}`}
                         type="button"
-                        className="btn btn-amber w-100 fw-semibold"
-                        style={{ minHeight: 44 }}
-                        onClick={() => onReturnClick(line)}
+                        className="btn btn-sm btn-outline-primary fw-semibold flex-grow-1"
+                        style={{ minHeight: 40 }}
+                        onClick={() => setExtendingLine(line)}
                       >
-                        <i className="bi bi-arrow-return-left me-1" aria-hidden="true" />
-                        Process Return
+                        <i className="bi bi-calendar-plus me-1" aria-hidden="true" />
+                        Extend
                       </button>
-                    )}
+                      {onReturnClick && (
+                        <button
+                          id={`mobile-return-btn-${line.lineId}`}
+                          type="button"
+                          className="btn btn-sm btn-amber fw-semibold flex-grow-1"
+                          style={{ minHeight: 40 }}
+                          onClick={() => onReturnClick(line)}
+                        >
+                          <i className="bi bi-arrow-return-left me-1" aria-hidden="true" />
+                          Return
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )
               })}
@@ -615,6 +674,18 @@ export default function DashboardBoard({ onReturnClick }: DashboardBoardProps) {
           </>
         )}
       </div>
+
+      {/* Extension Modal */}
+      {extendingLine && (
+        <ExtensionModal
+          line={extendingLine}
+          onClose={() => setExtendingLine(null)}
+          onSuccess={(_count, msg) => {
+            refresh()
+            onExtendSuccess?.(msg)
+          }}
+        />
+      )}
     </div>
   )
 }
