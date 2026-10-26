@@ -27,6 +27,8 @@ Open two terminals in the repository root.
 dotnet run --project src/Horizon.EquipmentTracker.Api --launch-profile http
 ```
 
+*(Alternatively, open `Horizon.EquipmentTracker.sln` in Visual Studio and run the `http` profile).*
+
 On first start it creates the `HorizonEquipmentTracker` database in LocalDB, applies the migration and seeds sample data. Swagger is at http://localhost:5186/swagger.
 
 **Terminal 2: client (http://localhost:5173)**

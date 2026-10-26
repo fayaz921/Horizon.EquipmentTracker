@@ -19,6 +19,16 @@ builder.Services.AddScoped<Horizon.EquipmentTracker.Api.Services.AdminService>()
 builder.Services.AddScoped<Horizon.EquipmentTracker.Api.Services.HistoryService>();
 builder.Services.AddScoped<Horizon.EquipmentTracker.Api.Common.AdminAuthorizationFilter>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -57,8 +67,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+else
+{
+    app.UseHttpsRedirection();
+}
 
-app.UseHttpsRedirection();
+app.UseCors();
 
 app.UseAuthorization();
 
