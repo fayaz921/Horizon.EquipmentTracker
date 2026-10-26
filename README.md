@@ -126,7 +126,7 @@ The final frontend redesign attempt was rejected and rolled back. That conversat
 
 ## Hours
 
-About \_\_ hours in total. See `HOURS.md` for the per-day breakdown.
+About 17.5 hours in total. See `HOURS.md` for the per-day breakdown.
 
 ## Conversations
 
