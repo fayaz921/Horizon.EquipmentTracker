@@ -1,0 +1,49 @@
+# Horizon Equipment Tracker — Initiative Epics Breakdown
+# Table order is build order. Target is .NET 8.
+
+[[epic]]
+id = 1
+slug = "epic-backend-foundation"
+title = "Backend Foundation (Entities, Migrations, Seed)"
+description = "A runnable ASP.NET Core Web API (.NET 8) with SQL Server LocalDB, domain entities, EF Core migrations, concurrency rowversions, and automatic seed routines for demo staff, equipment, kits, and PIN hashes."
+covers = ["FR-23"]
+
+[[epic]]
+id = 2
+slug = "epic-checkout-and-return"
+title = "Checkout and Return"
+description = "Fast passwordless multi-line checkouts with dual attribution, expected return dates in PKT, survey kit configuration templates, status lockouts, and per-line returns with partial counted quantity support."
+covers = ["FR-1", "FR-2", "FR-3", "FR-4", "FR-7", "FR-8"]
+after = [{ epic = 1, needs = "database context, entities, and seed data" }]
+
+[[epic]]
+id = 3
+slug = "epic-approvals-and-damage"
+title = "Approvals and Damage"
+description = "Operator PIN approval workflow for restricted assets with queue-only holding and no admin override, alongside mandatory return condition checks and instant damage quarantining to Needs Inspection."
+covers = ["FR-9", "FR-10", "FR-11", "FR-12", "FR-13", "FR-20"]
+after = [{ epic = 2, needs = "checkout lines and return processing pipeline" }]
+
+[[epic]]
+id = 4
+slug = "epic-overdue-and-history"
+title = "Overdue and History"
+description = "Pakistan Standard Time calendar-day delinquency calculation, due date extension workflow with revision audit logs, WhatsApp reminder link generation, and retrospective custody log queries with interval overlap matching."
+covers = ["FR-14", "FR-15", "FR-16", "FR-17", "FR-18"]
+after = [{ epic = 2, needs = "checkout events, lines, and lifecycle state transitions" }]
+
+[[epic]]
+id = 5
+slug = "epic-admin"
+title = "Admin"
+description = "Administrative security filter verifying Admin PIN header, asset loss flagging, and catalog management CRUD for personnel and equipment with soft-deletion integrity."
+covers = ["FR-19", "FR-21", "FR-22"]
+after = [{ epic = 1, needs = "entities and Admin PIN configuration" }]
+
+[[epic]]
+id = 6
+slug = "epic-frontend-screens"
+title = "Frontend Screens"
+description = "React SPA (Vite + TypeScript + Bootstrap 5.3) providing the live Who-Has-What dashboard, checkout modal, return modal, approvals queue, extension dialog, history table, and admin management panel."
+covers = ["FR-1", "FR-5", "FR-6", "FR-8", "FR-9", "FR-12", "FR-13", "FR-14", "FR-15", "FR-17", "FR-18", "FR-19"]
+after = [{ epic = 2, needs = "checkout and return endpoints" }, { epic = 3, needs = "approvals endpoints" }, { epic = 4, needs = "overdue and history endpoints" }, { epic = 5, needs = "admin endpoints" }]

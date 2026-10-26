@@ -1,0 +1,49 @@
+# Epic 1: Backend Foundation (Entities, Migrations, Seed)
+
+[[entry]]
+id = 1
+type = "story"
+title = "Web API Project Scaffold & Core Infrastructure"
+description = "Scaffold ASP.NET Core Web API (.NET 8) in src/Horizon.EquipmentTracker.Api with Swagger, PKT timezone extensions (DateTimeExtensions.cs), and cryptographic SHA-256 helper (PinHasher.cs)."
+verify = "dotnet build src/Horizon.EquipmentTracker.Api succeeds; running API returns 200 on Swagger endpoints."
+covers = ["AD-1", "AD-2"]
+after = []
+hitl = false
+risk = "low"
+notes = ["Scope: Must-Have"]
+
+[[entry]]
+id = 2
+type = "story"
+title = "Domain Entities, Enums & Concurrency Tokens"
+description = "Define Personnel, SerializedEquipment, CountedInventory, CheckoutEvent, CheckoutLine, DueDateExtensionLog, SurveyKit entities with byte[] RowVersion concurrency tokens and EquipmentStatus, ReturnCondition enums."
+verify = "Entity classes compile with all properties, foreign keys, and optimistic concurrency tokens mapped."
+covers = ["AD-3"]
+after = [1]
+hitl = false
+risk = "low"
+notes = ["Scope: Must-Have"]
+
+[[entry]]
+id = 3
+type = "story"
+title = "EF Core DbContext, Entity Configurations & Initial Migration"
+description = "Implement EquipmentTrackerDbContext, fluent type configurations with SQL Server LocalDB connection string, and generate the initial EF Core database migration."
+verify = "dotnet ef migrations add InitialCreate succeeds and schema matches structural seed ERD."
+covers = ["AD-1", "AD-3"]
+after = [2]
+hitl = false
+risk = "medium"
+notes = ["Scope: Must-Have"]
+
+[[entry]]
+id = 4
+type = "story"
+title = "Database Seeder & Startup Cold-Boot Pipeline"
+description = "Implement DatabaseSeeder.cs populating 7 personnel, serialized equipment, counted pools, survey kits, sample active overdue checkout, sample historical checkout, and PIN hashes; auto-migrate and seed in Program.cs."
+verify = "Launching the API on an empty database creates all tables and seeds exact test catalog matching PRD §4.8."
+covers = ["FR-23", "AD-10"]
+after = [3]
+hitl = false
+risk = "low"
+notes = ["Scope: Must-Have"]

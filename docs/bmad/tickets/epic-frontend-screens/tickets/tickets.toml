@@ -1,0 +1,97 @@
+# Epic 6: Frontend Screens
+
+[[entry]]
+id = 1
+type = "story"
+title = "React SPA Scaffold, Types, API Client & Bootstrap Layout"
+description = "Scaffold React + Vite + TypeScript application in src/client with Bootstrap 5.3; declare TypeScript DTO interfaces mirroring backend models, implement typed Fetch apiClient.ts with error/409 handling, and build responsive Navbar."
+verify = "npm run dev starts Vite dev server; UI loads with branded navigation bar and typed API client compiles cleanly."
+covers = ["AD-1", "AD-3"]
+after = []
+hitl = false
+risk = "low"
+notes = ["Scope: Must-Have"]
+
+[[entry]]
+id = 2
+type = "story"
+title = "Single-Pane Operational Board Component"
+description = "Implement DashboardBoard.tsx rendering live custody grid with status badges (Available, Out, Pending Approval, Needs Inspection, Lost), counted inventory pool cards (Tripods 4, Tablets 6), and active overdue indicators."
+verify = "Dashboard displays real-time asset cards, accurate bulk pools, and delinquent badges matching backend data."
+covers = ["FR-5", "FR-6", "FR-14"]
+after = [1]
+hitl = false
+risk = "medium"
+notes = ["Scope: Must-Have"]
+
+[[entry]]
+id = 3
+type = "story"
+title = "Morning Checkout Modal Component"
+description = "Implement CheckoutModal.tsx offering under 15-second flow: staff dropdown with auto LoggedBy defaulting, sample kit template selector (pre-filling each line with the next available unit of that type, omitting unavailable types with a clear notice while allowing checkout to proceed), multi-line equipment picker, return date buttons (Today, Tomorrow, Custom in PKT), and inline 409 conflict surfacing; strictly no demo PINs in UI."
+verify = "Surveyor completes checkout under 15 seconds; selecting a kit pre-fills next available units and cleanly handles unavailable units without blocking; concurrent conflict surfaces inline error."
+covers = ["FR-1", "FR-2", "FR-3", "FR-4", "FR-7", "AD-3"]
+after = [2]
+hitl = false
+risk = "medium"
+notes = ["Scope: Must-Have"]
+
+[[entry]]
+id = 4
+type = "story"
+title = "Per-Line Return Modal Component"
+description = "Implement ReturnModal.tsx allowing surveyors or Saima to view active lines by recipient, return items line-by-line, choose partial return count for counted inventory, and mandating condition selection ('Good' vs 'Damaged') while keeping damage notes strictly optional."
+verify = "Return modal closes individual lines, updates counted pools, and immediately moves damaged items to Needs Inspection; returns succeed with or without damage notes."
+covers = ["FR-8", "FR-9", "FR-10", "AD-7"]
+after = [2]
+hitl = false
+risk = "medium"
+notes = ["Scope: Must-Have"]
+
+[[entry]]
+id = 5
+type = "story"
+title = "Overdue WhatsApp Reminder Button & Extension Modal"
+description = "Implement whatsapp.ts generating wa.me links on Due Today and Overdue rows, and ExtensionModal.tsx allowing pre-delinquency self-extension or Admin PIN-gated extension once overdue, showing cumulative revision count badge."
+verify = "Clicking WhatsApp button opens wa.me link with pre-filled message; extension modal extends return date and displays revision badge."
+covers = ["FR-14", "FR-15", "FR-16", "AD-8", "AD-9"]
+after = [2]
+hitl = false
+risk = "low"
+notes = ["Scope: Should-Have"]
+
+[[entry]]
+id = 6
+type = "story"
+title = "Approvals Queue Modal Component"
+description = "Implement ApprovalsQueue.tsx displaying pending restricted equipment requests, modal PIN challenge for Hamza's PIN ('1234') releasing item to Out, and cancellation button returning item to Available."
+verify = "Hamza verifies PIN in modal and item transitions to Out; cancel button restores item to Available."
+covers = ["FR-12", "FR-13", "AD-5"]
+after = [2]
+hitl = false
+risk = "medium"
+notes = ["Scope: Should-Have"]
+
+[[entry]]
+id = 7
+type = "story"
+title = "Retrospective Custody History Table Component"
+description = "Implement HistoryTable.tsx displaying searchable custody intervals with one-click presets ('This Month', 'Last Month', 'Custom Range') and Surveyor / Equipment dropdown filters with sub-second interval overlap rendering."
+verify = "History view displays past and ongoing checkouts, correctly filtering across presets and personnel/equipment selections."
+covers = ["FR-17", "FR-18"]
+after = [2]
+hitl = false
+risk = "low"
+notes = ["Scope: Must-Have"]
+
+[[entry]]
+id = 8
+type = "story"
+title = "Admin Management Modal Component"
+description = "Implement AdminModal.tsx with Admin PIN ('9999') challenge: clear inspection with resolution notes, mark asset Lost, toggle RequiresApproval / assigned approver, and CRUD roster/equipment with soft deletion."
+verify = "Admin modal executes inspection clearance, sets Lost state, and edits catalog behind Admin PIN."
+covers = ["FR-11", "FR-19", "FR-20", "FR-21", "FR-22", "AD-6"]
+after = [2]
+hitl = false
+risk = "medium"
+notes = ["Scope: Must-Have"]

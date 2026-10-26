@@ -1,0 +1,61 @@
+# Epic 3: Approvals and Damage
+
+[[entry]]
+id = 1
+type = "story"
+title = "Mandatory Condition Check & Instant Damage Quarantine"
+description = "Enhance ReturnsController, ReturnService, return request DTOs, and mapping extension methods in Mapping/ to enforce mandatory Condition ('Good' or 'Damaged') while keeping ConditionNotes optional; update ReturnService business rules to immediately transition SerializedEquipment.Status to NeedsInspection or increment CountedInventory.QuantityInInspection directly via DbContext."
+verify = "Submitting return request DTO marked Damaged invokes ReturnService to isolate asset immediately into NeedsInspection and increment inspection count; returns mapped response DTO; condition note remains strictly optional."
+covers = ["FR-9", "FR-10", "AD-7", "AD-11"]
+after = []
+hitl = false
+risk = "medium"
+notes = ["Scope: Must-Have"]
+
+[[entry]]
+id = 2
+type = "story"
+title = "Restricted Asset Checkout Transition to Pending Approval"
+description = "Update CheckoutService domain rules, checkout DTOs, and mapping extension methods in Mapping/ so checkout requests containing items with RequiresApproval == true (such as the Drone) transition into PendingApproval rather than Out, locking them from circulation without inline PIN bypass and returning updated checkout line DTOs."
+verify = "Submitting checkout request for the Drone invokes CheckoutService, transitions item to PendingApproval, locks it from circulation, leaves custody unassigned, and returns mapped DTO with PendingApproval status."
+covers = ["FR-11", "FR-12", "AD-5", "AD-11"]
+after = []
+hitl = false
+risk = "low"
+notes = ["Scope: Should-Have"]
+
+[[entry]]
+id = 3
+type = "story"
+title = "Approvals Queue & Approver PIN Release Endpoint"
+description = "Build thin ApprovalsController with GET /api/approvals/pending and POST /api/approvals/{lineId}/approve delegating to ApprovalService; implement ApprovalService encapsulating business rules to query pending approvals directly on DbContext and verify designated approver's PIN hash via PinHasher, transitioning status to Out upon valid PIN while strictly rejecting incorrect PINs or admin overrides; build approval request and response DTOs in Dtos/ and hand-written mapping extension methods in Mapping/."
+verify = "POST with valid Hamza PIN via ApprovalsController invokes ApprovalService, releases drone to Out, and returns mapped response DTO; wrong PIN or Admin PIN fails with 401 ProblemDetails."
+covers = ["FR-12", "FR-13", "AD-5", "AD-11"]
+after = [2]
+hitl = false
+risk = "medium"
+notes = ["Scope: Should-Have"]
+
+[[entry]]
+id = 4
+type = "story"
+title = "Pending Request Cancellation Endpoint"
+description = "Implement POST /api/approvals/{lineId}/cancel in ApprovalsController delegating to ApprovalService; ApprovalService encapsulates business logic to cancel pending checkout requests and restore assets to Available directly on DbContext; build cancellation response DTO in Dtos/ and hand-written mapping extension methods in Mapping/."
+verify = "Cancelling a pending approval via ApprovalsController invokes ApprovalService, clears the checkout line, restores asset status to Available, and returns mapped response DTO."
+covers = ["FR-12", "AD-11"]
+after = [2]
+hitl = false
+risk = "low"
+notes = ["Scope: Should-Have"]
+
+[[entry]]
+id = 5
+type = "story"
+title = "Inspection Clearance Endpoint"
+description = "Implement POST /api/admin/equipment/{id}/clear-inspection in AdminController delegating to AdminService; AdminService verifies Admin PIN authorization and contains business logic to transition serialized items back to Available or decrement counted inventory inspection pools with optional resolution notes directly on DbContext; build clearance request and response DTOs in Dtos/ and hand-written mapping extension methods in Mapping/."
+verify = "Clearing inspection with valid Admin PIN invokes AdminService, restores item to Available, updates counted pools, and returns mapped response DTO; invalid PIN returns 401 Unauthorized ProblemDetails."
+covers = ["FR-20", "AD-6", "AD-7", "AD-11"]
+after = [1]
+hitl = false
+risk = "low"
+notes = ["Scope: Must-Have"]
