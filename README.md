@@ -87,6 +87,7 @@ Everything in the seed (7 people, 5 serialized items, 2 kit templates, sample ch
 - **Automated WhatsApp messages.** They need a Meta Business account, templates and per-message cost, and cannot be run by a reviewer. The `wa.me` button covers the need.
 - **CSV / Excel export.** The client asked to see history on a screen.
 - **Real user accounts and roles.** The client said "it's all on trust". A shared Admin PIN and an approver PIN cover the exceptions.
+- No authentication or authorization system. Identity is trust-based (name from a list, shared PINs), which matches the client's stated requirement. Real user accounts and RBAC were deliberately cut.
 - **QR codes, offline mode, mobile apps.** Not requested.
 
 ## Known limitations
